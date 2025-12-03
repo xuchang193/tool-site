@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    /* 对齐调整 */
+    .input-group label[for="clipboardText"] {
+        padding-top: 0px;
+        width: auto;
+        min-width: 80px;
+        margin-right: 10px;
+        text-align: left;
+    }
+</style>
+
+<h1>云端剪切板</h1>
+<form method="post">
+    <div class="input-group">
+        <label for="clipboardText">剪切板内容:</label>
+        <textarea id="clipboardText" name="clipboardText" rows="10">{{ clipboard }}</textarea>
+    </div>
+    <div class="button-container">
+        <button type="submit">保存到剪切板</button>
+        <button type="button" onclick="copyText('clipboardText', 'copySuccess')">复制到本地</button>
+    </div>
+</form>
+
+<div class="combined-text-container">
+    <div id="copySuccess" class="copy-success">已复制</div>
+</div>
+
+<script>
+    // 复制功能
+    function copyText(textareaId, successId) {
+        const textarea = document.getElementById(textareaId);
+        textarea.select();
+        document.execCommand('copy');
+        const successMessage = document.getElementById(successId);
+        successMessage.style.opacity = 1;
+        setTimeout(() => {
+            successMessage.style.opacity = 0;
+        }, 2000);
+    }
+</script>
+{% endblock %}

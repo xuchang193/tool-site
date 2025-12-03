@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    /* 针对高 textarea 调整 label 对齐 */
+    #inputText {
+        padding-top: 8px;
+    }
+
+    .input-group label[for="inputText"] {
+        padding-top: 0px;
+        width: auto;
+        min-width: 80px;
+        margin-right: 10px;
+        text-align: left;
+    }
+</style>
+
+<h1>Base64 编码/解码工具</h1>
+<form>
+    <div class="input-group">
+        <label for="inputText">原始文本:</label>
+        <textarea id="inputText" name="inputText" rows="8" placeholder="输入要编码的文本，或粘贴要解码的 Base64 字符串"></textarea>
+    </div>
+    <div class="button-container">
+        <button type="button" onclick="encodeBase64()">编码为 Base64</button>
+        <button type="button" onclick="decodeBase64()">解码 Base64</button>
+        <button type="button" onclick="clearText()">清空</button>
+    </div>
+</form>
+
+<h2>结果:</h2>
+<div class="combined-text-container">
+    <textarea id="resultText" readonly rows="8"></textarea>
+    <i class="fa-solid fa-copy copy-icon" onclick="copyText('resultText', 'copySuccessBase64')"></i>
+    <div id="copySuccessBase64" class="copy-success">已复制</div>
+</div>
+
+<script>
+    function encodeBase64() {
+        const inputText = document.getElementById('inputText').value;
+        const resultTextElement = document.getElementById('resultText');
+
+        if (!inputText.trim()) {
+            alert('请输入要编码的文本');
+            return;
+        }
+
+        try {
+            // 将文本编码为 Base64
+            const encoded = btoa(unescape(encodeURIComponent(inputText)));
+            resultTextElement.value = encoded;
+        } catch (error) {
+            alert('编码失败: ' + error.message);
+        }
+    }
+
+    function decodeBase64() {
+        const inputText = document.getElementById('inputText').value.trim();
+        const resultTextElement = document.getElementById('resultText');
+
+        if (!inputText) {
+            alert('请输入要解码的 Base64 字符串');
+            return;
+        }
+
+        try {
+            // 移除可能存在的空格和换行符
+            const cleanedInput = inputText.replace(/\s/g, '');
+            // 解码 Base64
+            const decoded = decodeURIComponent(escape(atob(cleanedInput)));
+            resultTextElement.value = decoded;
+        } catch (error) {
+            alert('解码失败: ' + error.message + '\n请确保输入的是有效的 Base64 字符串');
+        }
+    }
+
+    function clearText() {
+        document.getElementById('inputText').value = '';
+        document.getElementById('resultText').value = '';
+    }
+
+    function copyText(textareaId, successId) {
+        const textarea = document.getElementById(textareaId);
+        if (!textarea.value) {
+            alert('没有可复制的内容');
+            return;
+        }
+        textarea.select();
+        document.execCommand('copy');
+        const successMessage = document.getElementById(successId);
+        successMessage.style.opacity = 1;
+        setTimeout(() => {
+            successMessage.style.opacity = 0;
+        }, 2000);
+    }
+</script>
+{% endblock %}

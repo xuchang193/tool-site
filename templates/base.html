@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文本组合工具站</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+    <style>
+        /* 全局样式 */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            display: flex;
+        }
+
+        /* 标题栏样式 */
+        header {
+            background-color: white;
+            color: #333;
+            padding: 10px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            text-align: left;
+        }
+
+        /* 侧边栏样式 */
+        aside {
+            width: 200px;
+            background-color: #444;
+            color: white;
+            padding-top: 0;
+            position: sticky;
+            top: 40px;
+            height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+
+        aside ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        aside ul li {
+            margin-bottom: 10px;
+        }
+
+        aside ul li a {
+            display: block;
+            color: white;
+            text-align: left;
+            padding: 10px 20px;
+            text-decoration: none;
+        }
+
+        aside ul li a.active {
+            background-color: #555;
+        }
+
+        aside ul li a:hover {
+            background-color: #555;
+        }
+
+        /* 主内容区样式 */
+        main {
+            flex: 1;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-top: 0;
+        }
+
+        /* 表单样式 */
+        .input-group {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            width: 120px;
+            margin-right: 10px;
+            text-align: right;
+            padding-top: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .input-group textarea,
+        .input-group input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: none;
+            box-sizing: border-box;
+        }
+
+        .input-group textarea {
+            height: 80px;
+        }
+
+        .button-container {
+            margin-top: 20px;
+        }
+
+        /* 组合后的文本框样式 */
+        .combined-text-container {
+            position: relative;
+            margin-top: 20px;
+        }
+
+        #combinedTextTool1,
+        #combinedTextTool2,
+        #resultText {
+            width: 60%;
+            min-height: 300px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: vertical;
+            white-space: pre-wrap;
+        }
+
+        /* 复制图标样式 */
+        .copy-icon {
+            position: absolute;
+            top: 10px;
+            right: calc(40% + 10px);
+            cursor: pointer;
+            color: #007BFF;
+        }
+
+        /* 复制成功提示样式 */
+        .copy-success {
+            position: absolute;
+            top: 10px;
+            right: calc(40% + 40px);
+            background-color: #4CAF50;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        /* 按钮样式 */
+        button {
+            border-radius: 5px;
+            background-color: #007BFF;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <div style="width: 100%; display: flex; flex-direction: column;">
+        <header>
+            <h1>工具箱</h1>
+        </header>
+        <div style="display: flex;">
+            <aside>
+                <ul>
+                    <li><a href="/bug-fix" {% if request.path=='/bug-fix' %}class="active" {% endif %}>bug-fix文本组合</a>
+                    </li>
+                    <li><a href="/feature" {% if request.path=='/feature' %}class="active" {% endif %}>feature文本组合</a>
+                    </li>
+                    <li><a href="/clipboard" {% if request.path=='/clipboard' %}class="active" {% endif %}>云端剪切板</a>
+                    </li>
+                    <li><a href="/base64" {% if request.path=='/base64' %}class="active" {% endif %}>Base64编解码</a></li>
+                    <li><a href="/color" {% if request.path=='/color' %}class="active" {% endif %}>颜色工具</a></li>
+                </ul>
+            </aside>
+            <main>
+                {% block content %}
+                {% endblock %}
+            </main>
+        </div>
+    </div>
+</body>
+
+</html>

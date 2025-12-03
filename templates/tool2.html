@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>feature文本组合工具</h1>
+<form>
+    <div class="input-group">
+        <label for="implementationPlan">实现方案:</label>
+        <textarea id="implementationPlan" name="implementationPlan"></textarea>
+    </div>
+    <div class="input-group">
+        <label for="impactScope">影响范围:</label>
+        <textarea id="impactScope" name="impactScope">master</textarea>
+    </div>
+    <div class="input-group">
+        <label for="prMergeDate">PR merge日期:</label>
+        <input type="text" id="prMergeDate" name="prMergeDate" value="">
+    </div>
+    <div class="input-group">
+        <label for="prMergeBranchTool2">PR merge分支:</label>
+        <textarea id="prMergeBranchTool2" name="prMergeBranchTool2">master</textarea>
+    </div>
+    <div class="button-container">
+        <button type="button" onclick="combineTextTool2()">组合文本</button>
+    </div>
+</form>
+
+<h2>组合后的文本:</h2>
+<div class="combined-text-container">
+    <textarea id="combinedTextTool2" readonly></textarea>
+    <i class="fa-solid fa-copy copy-icon" onclick="copyText('combinedTextTool2', 'copySuccessTool2')"></i>
+    <div id="copySuccessTool2" class="copy-success">已复制</div>
+</div>
+
+<script>
+    // 页面加载时设置 PR merge 日期
+    window.onload = function () {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const dateString = `${year}-${month}-${day}`;
+        document.getElementById('prMergeDate').value = dateString;
+    };
+
+    function combineTextTool2() {
+        const implementationPlan = document.getElementById('implementationPlan').value;
+        const impactScope = document.getElementById('impactScope').value;
+        const prMergeDate = document.getElementById('prMergeDate').value;
+        const prMergeBranch = document.getElementById('prMergeBranchTool2').value;
+        const separator = '\n';
+        const combinedTextElement = document.getElementById('combinedTextTool2');
+
+        let combined = "";
+        combined += "实现方案: " + implementationPlan + separator;
+        combined += "影响范围: " + impactScope + separator;
+        combined += "PR merge日期: " + prMergeDate + separator;
+        combined += "PR merge分支: " + prMergeBranch;
+
+        combinedTextElement.value = combined;
+    }
+
+    function copyText(textareaId, successId) {
+        const textarea = document.getElementById(textareaId);
+        textarea.select();
+        document.execCommand('copy');
+        const successMessage = document.getElementById(successId);
+        successMessage.style.opacity = 1;
+        setTimeout(() => {
+            successMessage.style.opacity = 0;
+        }, 2000);
+    }
+</script>
+{% endblock %}

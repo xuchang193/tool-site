@@ -1,0 +1,714 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .color-tool-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    /* 主区域布局 */
+    .main-color-area {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        gap: 30px;
+        margin: 30px 0;
+    }
+
+    /* 左侧取色器区域 */
+    .picker-section {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        height: fit-content;
+    }
+
+    .picker-section h3 {
+        margin: 0 0 20px 0;
+        font-size: 16px;
+        color: #333;
+        font-weight: 600;
+    }
+
+    /* 颜色选择器容器 */
+    .custom-color-picker {
+        width: 100%;
+    }
+
+    /* 颜色面板 */
+    .color-panel {
+        width: 100%;
+        height: 200px;
+        position: relative;
+        border-radius: 8px;
+        overflow: hidden;
+        cursor: crosshair;
+        border: 2px solid #e0e0e0;
+        margin-bottom: 15px;
+        touch-action: none;
+    }
+
+    .color-panel-canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
+
+    /* 颜色选择器指示器 */
+    .color-indicator {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+        pointer-events: none;
+        transform: translate(-50%, -50%);
+        top: 0;
+        left: 0;
+    }
+
+    /* 色相滑块 */
+    .hue-slider-container {
+        position: relative;
+        width: 100%;
+        height: 12px;
+        border-radius: 6px;
+        overflow: visible;
+        border: 1px solid #e0e0e0;
+        cursor: pointer;
+        touch-action: none;
+        background: #f5f5f5;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: border-color 0.2s ease;
+    }
+
+    .hue-slider-container:hover {
+        border-color: #007BFF;
+    }
+
+    .hue-slider {
+        width: 100%;
+        height: 100%;
+        border-radius: 10px;
+        background: linear-gradient(to right,
+                #ff0000 0%, #ff8000 8.33%, #ffff00 16.66%,
+                #80ff00 25%, #00ff00 33.33%, #00ff80 41.66%,
+                #00ffff 50%, #0080ff 58.33%, #0000ff 66.66%,
+                #8000ff 75%, #ff00ff 83.33%, #ff0080 91.66%, #ff0000 100%);
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    .hue-slider-handle {
+        position: absolute;
+        top: 50%;
+        width: 12px;
+        height: 12px;
+        border: 3px solid #ffffff;
+        border-radius: 50%;
+        background: #ffffff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 0, 0, 0.1);
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        transition: box-shadow 0.2s ease;
+    }
+
+    .hue-slider-container:hover .hue-slider-handle {
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 123, 255, 0.3);
+    }
+
+    /* 右侧控制面板 */
+    .control-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .control-card {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        transition: box-shadow 0.3s ease;
+    }
+
+    .control-card:hover {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .control-card h3 {
+        margin: 0 0 16px 0;
+        font-size: 16px;
+        color: #333;
+        font-weight: 600;
+    }
+
+    /* 颜色预览区域 */
+    .color-preview-section {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .color-preview {
+        width: 100px;
+        height: 100px;
+        border-radius: 8px;
+        border: 2px solid #e0e0e0;
+        background: #ffffff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        flex-shrink: 0;
+    }
+
+    .color-info {
+        flex: 1;
+    }
+
+    .color-code {
+        font-family: 'Courier New', monospace;
+        font-size: 18px;
+        font-weight: bold;
+        color: #333;
+        margin: 8px 0;
+        padding: 10px 14px;
+        background: #f5f5f5;
+        border-radius: 6px;
+        display: inline-block;
+        cursor: pointer;
+        transition: background 0.2s ease;
+        min-width: 150px;
+    }
+
+    .color-code:hover {
+        background: #e8e8e8;
+    }
+
+    .color-label {
+        font-size: 13px;
+        color: #666;
+        margin-bottom: 6px;
+    }
+
+    /* 输入框样式 */
+    .input-wrapper {
+        margin-bottom: 16px;
+    }
+
+    .input-wrapper label {
+        display: block;
+        font-size: 13px;
+        color: #666;
+        margin-bottom: 8px;
+        font-weight: 500;
+    }
+
+    .text-input {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 15px;
+        font-family: 'Courier New', monospace;
+        transition: border-color 0.2s ease;
+        box-sizing: border-box;
+    }
+
+    .text-input:focus {
+        outline: none;
+        border-color: #007BFF;
+    }
+
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+        .main-color-area {
+            grid-template-columns: 1fr;
+        }
+
+        .input-row {
+            grid-template-columns: 1fr;
+        }
+
+        .action-buttons {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* 成功提示 */
+    .toast {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #28a745;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        opacity: 0;
+        transform: translateY(20px);
+        transition: all 0.3s ease;
+        z-index: 1000;
+    }
+
+    .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+</style>
+
+<div class="color-tool-container">
+    <h1 style="margin-bottom: 10px;">颜色工具</h1>
+    <p style="color: #666; margin-bottom: 30px;">选择、输入和转换颜色代码，支持 RGB 和 16 进制格式</p>
+
+    <!-- 主颜色区域 -->
+    <div class="main-color-area">
+        <!-- 左侧：取色器 -->
+        <div class="picker-section">
+            <h3>🎨 颜色选择器</h3>
+            <div class="custom-color-picker">
+                <div class="color-panel" id="colorPanel">
+                    <canvas class="color-panel-canvas" id="colorCanvas"></canvas>
+                    <div class="color-indicator" id="colorIndicator"></div>
+                </div>
+                <div class="hue-slider-container" id="hueSliderContainer">
+                    <div class="hue-slider"></div>
+                    <div class="hue-slider-handle" id="hueSliderHandle"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：控制面板 -->
+        <div class="control-panel">
+            <!-- 颜色预览和显示 -->
+            <div class="control-card">
+                <h3>当前颜色</h3>
+                <div class="color-preview-section">
+                    <div class="color-preview" id="colorPreview"></div>
+                    <div class="color-info">
+                        <div class="color-label">16 进制值</div>
+                        <div class="color-code" id="currentHex" onclick="copyHex()">#000000</div>
+                        <div class="color-label" style="margin-top: 12px;">RGB 值</div>
+                        <div class="color-code" id="rgbValue" onclick="copyRGB()">rgb(0, 0, 0)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RGB 输入 -->
+            <div class="control-card">
+                <h3>RGB 值</h3>
+                <div class="input-wrapper">
+                    <label>输入 RGB 值（支持多种格式：255, 255, 255 或 (255, 255, 255) 等）</label>
+                    <input type="text" class="text-input" id="rgbInput" placeholder="255, 255, 255 或 (255, 255, 255)"
+                        oninput="updateFromRGBInput()">
+                </div>
+            </div>
+
+            <!-- 16进制输入 -->
+            <div class="control-card">
+                <h3>16 进制值</h3>
+                <div class="input-wrapper">
+                    <label>输入 16 进制值</label>
+                    <input type="text" class="text-input" id="hexInput" placeholder="#000000"
+                        oninput="updateFromHexInput()">
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Toast 提示 -->
+<div class="toast" id="toast"></div>
+
+<script>
+    // 颜色选择器状态
+    let currentHue = 0; // 0-360
+    let currentSaturation = 0; // 0-100
+    let currentLightness = 100; // 0-100
+    let isDraggingColor = false;
+    let isDraggingHue = false;
+
+    // HSL 转 RGB
+    function hslToRgb(h, s, l) {
+        h = h / 360;
+        s = s / 100;
+        l = l / 100;
+
+        let r, g, b;
+        if (s === 0) {
+            r = g = b = l;
+        } else {
+            const hue2rgb = (p, q, t) => {
+                if (t < 0) t += 1;
+                if (t > 1) t -= 1;
+                if (t < 1 / 6) return p + (q - p) * 6 * t;
+                if (t < 1 / 2) return q;
+                if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+                return p;
+            };
+            const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            const p = 2 * l - q;
+            r = hue2rgb(p, q, h + 1 / 3);
+            g = hue2rgb(p, q, h);
+            b = hue2rgb(p, q, h - 1 / 3);
+        }
+        return {
+            r: Math.round(r * 255),
+            g: Math.round(g * 255),
+            b: Math.round(b * 255)
+        };
+    }
+
+    // RGB 转 HSL
+    function rgbToHsl(r, g, b) {
+        r /= 255;
+        g /= 255;
+        b /= 255;
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        let h, s, l = (max + min) / 2;
+
+        if (max === min) {
+            h = s = 0;
+        } else {
+            const d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            switch (max) {
+                case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+                case g: h = ((b - r) / d + 2) / 6; break;
+                case b: h = ((r - g) / d + 4) / 6; break;
+            }
+        }
+        return {
+            h: Math.round(h * 360),
+            s: Math.round(s * 100),
+            l: Math.round(l * 100)
+        };
+    }
+
+    // 绘制颜色面板
+    function drawColorPanel() {
+        const canvas = document.getElementById('colorCanvas');
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+
+        // 绘制饱和度渐变（从左到右）
+        for (let x = 0; x < width; x++) {
+            const s = (x / width) * 100;
+            // 从上到下绘制亮度渐变
+            for (let y = 0; y < height; y++) {
+                const l = 100 - (y / height) * 100;
+                const rgb = hslToRgb(currentHue, s, l);
+                ctx.fillStyle = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+                ctx.fillRect(x, y, 1, 1);
+            }
+        }
+    }
+
+    // 更新颜色指示器位置
+    function updateColorIndicator() {
+        const panel = document.getElementById('colorPanel');
+        const indicator = document.getElementById('colorIndicator');
+        const x = (currentSaturation / 100) * panel.offsetWidth;
+        const y = ((100 - currentLightness) / 100) * panel.offsetHeight;
+        indicator.style.left = x + 'px';
+        indicator.style.top = y + 'px';
+    }
+
+    // 更新色相滑块位置
+    function updateHueSlider() {
+        const container = document.getElementById('hueSliderContainer');
+        const handle = document.getElementById('hueSliderHandle');
+        const x = (currentHue / 360) * container.offsetWidth;
+        handle.style.left = x + 'px';
+    }
+
+    // 从颜色面板获取颜色
+    function getColorFromPanel(event) {
+        const panel = document.getElementById('colorPanel');
+        const rect = panel.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        const width = panel.offsetWidth;
+        const height = panel.offsetHeight;
+
+        currentSaturation = Math.max(0, Math.min(100, (x / width) * 100));
+        currentLightness = Math.max(0, Math.min(100, 100 - (y / height) * 100));
+
+        updateColorIndicator();
+        updateColor();
+    }
+
+    // 从色相滑块获取色相
+    function getHueFromSlider(event) {
+        const container = document.getElementById('hueSliderContainer');
+        const rect = container.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const width = container.offsetWidth;
+
+        currentHue = Math.max(0, Math.min(360, (x / width) * 360));
+
+        updateHueSlider();
+        drawColorPanel();
+        updateColor();
+    }
+
+    // 更新所有颜色显示
+    function updateColor() {
+        const rgb = hslToRgb(currentHue, currentSaturation, currentLightness);
+        const hex = rgbToHex(rgb.r, rgb.g, rgb.b);
+        updateAllDisplays(rgb.r, rgb.g, rgb.b, hex);
+    }
+
+    // 解析多种RGB格式
+    function parseRGB(input) {
+        if (!input || !input.trim()) return null;
+
+        let cleaned = input.trim();
+        cleaned = cleaned.replace(/[()]/g, '');
+        const parts = cleaned.split(/[,;\s]+/).filter(p => p);
+
+        if (parts.length !== 3) return null;
+
+        const r = parseInt(parts[0]);
+        const g = parseInt(parts[1]);
+        const b = parseInt(parts[2]);
+
+        if (isNaN(r) || isNaN(g) || isNaN(b)) return null;
+        if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) return null;
+
+        return { r, g, b };
+    }
+
+    // 格式化RGB为标准格式
+    function formatRGB(r, g, b) {
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    // 将16进制转为RGB
+    function hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+    }
+
+    // 将RGB转为16进制
+    function rgbToHex(r, g, b) {
+        return "#" + [r, g, b].map(x => {
+            const hex = x.toString(16);
+            return hex.length === 1 ? "0" + hex : hex;
+        }).join("");
+    }
+
+    // 显示提示
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 2000);
+    }
+
+    // 更新所有显示
+    function updateAllDisplays(r, g, b, hex) {
+        // 更新预览
+        document.getElementById('colorPreview').style.backgroundColor = hex;
+        document.getElementById('currentHex').textContent = hex;
+        document.getElementById('rgbValue').textContent = formatRGB(r, g, b);
+
+        // 更新输入框（不触发事件）
+        const rgbInput = document.getElementById('rgbInput');
+        const hexInput = document.getElementById('hexInput');
+
+        rgbInput.oninput = null;
+        rgbInput.value = `${r}, ${g}, ${b}`;
+        rgbInput.oninput = updateFromRGBInput;
+
+        hexInput.oninput = null;
+        hexInput.value = hex;
+        hexInput.oninput = updateFromHexInput;
+    }
+
+    // 从RGB或Hex更新颜色选择器
+    function updatePickerFromColor(r, g, b) {
+        const hsl = rgbToHsl(r, g, b);
+        currentHue = hsl.h;
+        currentSaturation = hsl.s;
+        currentLightness = hsl.l;
+        updateHueSlider();
+        drawColorPanel();
+        updateColorIndicator();
+    }
+
+    // 从RGB输入框更新
+    function updateFromRGBInput() {
+        const input = document.getElementById('rgbInput').value;
+        const rgb = parseRGB(input);
+
+        if (rgb) {
+            const hex = rgbToHex(rgb.r, rgb.g, rgb.b);
+            updatePickerFromColor(rgb.r, rgb.g, rgb.b);
+            updateAllDisplays(rgb.r, rgb.g, rgb.b, hex);
+        }
+    }
+
+    // 从16进制输入框更新
+    function updateFromHexInput() {
+        let hex = document.getElementById('hexInput').value.trim();
+        if (!hex.startsWith('#')) {
+            hex = '#' + hex;
+        }
+
+        const rgb = hexToRgb(hex);
+        if (rgb) {
+            updatePickerFromColor(rgb.r, rgb.g, rgb.b);
+            updateAllDisplays(rgb.r, rgb.g, rgb.b, hex);
+        }
+    }
+
+    // 复制16进制值
+    function copyHex() {
+        const hex = document.getElementById('currentHex').textContent;
+        if (!hex) {
+            showToast('没有可复制的内容');
+            return;
+        }
+        navigator.clipboard.writeText(hex).then(() => {
+            showToast('已复制: ' + hex);
+        }).catch(() => {
+            const textarea = document.createElement('textarea');
+            textarea.value = hex;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showToast('已复制: ' + hex);
+        });
+    }
+
+    // 复制RGB值（规范格式）
+    function copyRGB() {
+        const rgb = document.getElementById('rgbValue').textContent;
+        if (!rgb) {
+            showToast('没有可复制的内容');
+            return;
+        }
+        navigator.clipboard.writeText(rgb).then(() => {
+            showToast('已复制: ' + rgb);
+        }).catch(() => {
+            const textarea = document.createElement('textarea');
+            textarea.value = rgb;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showToast('已复制: ' + rgb);
+        });
+    }
+
+    // 初始化
+    window.onload = function () {
+        const canvas = document.getElementById('colorCanvas');
+        const panel = document.getElementById('colorPanel');
+        const hueContainer = document.getElementById('hueSliderContainer');
+
+        // 设置canvas尺寸
+        canvas.width = panel.offsetWidth;
+        canvas.height = panel.offsetHeight;
+
+        // 绘制颜色面板
+        drawColorPanel();
+        updateColorIndicator();
+        updateHueSlider();
+        updateColor();
+
+        // 颜色面板事件
+        panel.addEventListener('mousedown', (e) => {
+            isDraggingColor = true;
+            getColorFromPanel(e);
+        });
+
+        panel.addEventListener('mousemove', (e) => {
+            if (isDraggingColor) {
+                getColorFromPanel(e);
+            }
+        });
+
+        panel.addEventListener('mouseup', () => {
+            isDraggingColor = false;
+        });
+
+        panel.addEventListener('mouseleave', () => {
+            isDraggingColor = false;
+        });
+
+        // 触摸事件支持
+        panel.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            isDraggingColor = true;
+            getColorFromPanel(e.touches[0]);
+        });
+
+        panel.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (isDraggingColor) {
+                getColorFromPanel(e.touches[0]);
+            }
+        });
+
+        panel.addEventListener('touchend', () => {
+            isDraggingColor = false;
+        });
+
+        // 色相滑块事件
+        hueContainer.addEventListener('mousedown', (e) => {
+            isDraggingHue = true;
+            getHueFromSlider(e);
+        });
+
+        hueContainer.addEventListener('mousemove', (e) => {
+            if (isDraggingHue) {
+                getHueFromSlider(e);
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDraggingHue = false;
+        });
+
+        // 触摸事件支持
+        hueContainer.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            isDraggingHue = true;
+            getHueFromSlider(e.touches[0]);
+        });
+
+        hueContainer.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (isDraggingHue) {
+                getHueFromSlider(e.touches[0]);
+            }
+        });
+
+        hueContainer.addEventListener('touchend', () => {
+            isDraggingHue = false;
+        });
+
+        // 响应窗口大小变化
+        window.addEventListener('resize', () => {
+            canvas.width = panel.offsetWidth;
+            canvas.height = panel.offsetHeight;
+            drawColorPanel();
+            updateColorIndicator();
+            updateHueSlider();
+        });
+    };
+</script>
+{% endblock %}

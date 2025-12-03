@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>bug-fix文本组合工具</h1>
+<form>
+    <div class="input-group">
+        <label for="bugReason">Bug 原因:</label>
+        <textarea id="bugReason" name="bugReason"></textarea>
+    </div>
+    <div class="input-group">
+        <label for="bugFix">Bug 解决方式:</label>
+        <textarea id="bugFix" name="bugFix"></textarea>
+    </div>
+    <div class="input-group">
+        <label for="testPoints">测试要点:</label>
+        <textarea id="testPoints" name="testPoints"></textarea>
+    </div>
+    <div class="input-group">
+        <label for="bugImpact">Bug 影响范围:</label>
+        <textarea id="bugImpact" name="bugImpact">master</textarea>
+    </div>
+    <div class="input-group">
+        <label for="prDate">PR 日期:</label>
+        <input type="text" id="prDate" name="prDate" value="">
+    </div>
+    <div class="input-group">
+        <label for="prTestDate">PR 测试日期:</label>
+        <input type="text" id="prTestDate" name="prTestDate" value="">
+    </div>
+    <div class="input-group">
+        <label for="prMergeBranch">PR Merge 分支:</label>
+        <textarea id="prMergeBranch" name="prMergeBranch">master</textarea>
+    </div>
+    <div class="button-container">
+        <button type="button" onclick="combineTextTool1()">组合文本</button>
+    </div>
+</form>
+
+<h2>组合后的文本:</h2>
+<div class="combined-text-container">
+    <textarea id="combinedTextTool1" readonly></textarea>
+    <i class="fa-solid fa-copy copy-icon" onclick="copyText('combinedTextTool1', 'copySuccessTool1')"></i>
+    <div id="copySuccessTool1" class="copy-success">已复制</div>
+</div>
+
+<script>
+    // 页面加载时设置日期
+    window.onload = function () {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const dateString = `${year}-${month}-${day}`;
+        document.getElementById('prDate').value = dateString;
+        document.getElementById('prTestDate').value = dateString;
+    };
+
+    function combineTextTool1() {
+        const bugReason = document.getElementById('bugReason').value;
+        const bugFix = document.getElementById('bugFix').value;
+        const testPoints = document.getElementById('testPoints').value;
+        const bugImpact = document.getElementById('bugImpact').value;
+        const prDate = document.getElementById('prDate').value;
+        const prTestDate = document.getElementById('prTestDate').value;
+        const prMergeBranch = document.getElementById('prMergeBranch').value;
+        const separator = '\n';
+        const combinedTextElement = document.getElementById('combinedTextTool1');
+
+        let combined = "";
+        combined += "Bug 原因: " + bugReason + separator;
+        combined += "Bug 解决方式: " + bugFix + separator;
+        combined += "测试要点: " + testPoints + separator;
+        combined += "Bug 影响范围: " + bugImpact + separator;
+        combined += "PR 日期: " + prDate + separator;
+        combined += "PR 测试日期: " + prTestDate + separator;
+        combined += "PR Merge 分支: " + prMergeBranch;
+
+        combinedTextElement.value = combined;
+    }
+
+    function copyText(textareaId, successId) {
+        const textarea = document.getElementById(textareaId);
+        textarea.select();
+        document.execCommand('copy');
+        const successMessage = document.getElementById(successId);
+        successMessage.style.opacity = 1;
+        setTimeout(() => {
+            successMessage.style.opacity = 0;
+        }, 2000);
+    }
+</script>
+{% endblock %}
