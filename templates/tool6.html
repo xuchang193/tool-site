@@ -1,0 +1,786 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    /* 主布局：左右两栏 */
+    .journal-page {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 30px;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    /* 左侧：写日记区域 */
+    .journal-write {
+        background: #fff;
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .journal-header {
+        text-align: center;
+        margin-bottom: 25px;
+    }
+
+    .journal-header h1 {
+        color: #333;
+        margin-bottom: 8px;
+        font-size: 28px;
+    }
+
+    .timer-section {
+        text-align: center;
+        margin-bottom: 25px;
+        padding: 15px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px;
+        color: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .timer-display {
+        font-size: 42px;
+        font-weight: bold;
+        margin: 8px 0;
+        font-family: 'Courier New', monospace;
+    }
+
+    .timer-label {
+        font-size: 14px;
+        opacity: 0.9;
+    }
+
+    .timer-warning {
+        color: #ffeb3b;
+    }
+
+    .timer-danger {
+        color: #ff5252;
+        animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.7;
+        }
+    }
+
+    .question-section {
+        margin-bottom: 20px;
+    }
+
+    .question-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+    }
+
+    .question-input {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+        font-family: inherit;
+        resize: vertical;
+        min-height: 70px;
+        transition: border-color 0.2s ease;
+        box-sizing: border-box;
+    }
+
+    .question-input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .submit-section {
+        margin-top: 25px;
+        text-align: center;
+    }
+
+    .submit-btn {
+        padding: 12px 35px;
+        font-size: 15px;
+        font-weight: 600;
+        color: white;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        transition: all 0.3s ease;
+    }
+
+    .submit-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+    }
+
+    .submit-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .status-message {
+        margin-top: 15px;
+        padding: 10px 15px;
+        border-radius: 8px;
+        text-align: center;
+        font-weight: 500;
+        display: none;
+    }
+
+    .status-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .status-error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .status-message.show {
+        display: block;
+    }
+
+    .time-up-message {
+        background: #fff3cd;
+        color: #856404;
+        border: 2px solid #ffc107;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        text-align: center;
+        font-weight: 600;
+    }
+
+    /* 右侧：回顾区域 */
+    .journal-review {
+        background: #fff;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        height: fit-content;
+        position: sticky;
+        top: 20px;
+    }
+
+    .review-header {
+        text-align: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+
+    .review-header h2 {
+        color: #333;
+        font-size: 20px;
+        margin-bottom: 5px;
+    }
+
+    /* 日期导航 */
+    .date-nav {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .nav-btn {
+        width: 40px;
+        height: 40px;
+        border: 2px solid #e0e0e0;
+        border-radius: 50%;
+        background: #fff;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        color: #666;
+        transition: all 0.2s ease;
+    }
+
+    .nav-btn:hover {
+        border-color: #667eea;
+        color: #667eea;
+        background: #f5f7ff;
+    }
+
+    .date-display {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+        min-width: 130px;
+        text-align: center;
+    }
+
+    /* 日期选择器 */
+    .date-picker-section {
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .date-picker-input {
+        padding: 10px 15px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: border-color 0.2s ease;
+    }
+
+    .date-picker-input:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+
+    /* 日记内容展示 */
+    .review-content {
+        margin-top: 20px;
+    }
+
+    .review-item {
+        margin-bottom: 18px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid #667eea;
+    }
+
+    .review-item-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #667eea;
+        margin-bottom: 8px;
+    }
+
+    .review-item-content {
+        font-size: 14px;
+        color: #333;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    .review-item-content.none {
+        color: #999;
+        font-style: italic;
+    }
+
+    .review-status {
+        text-align: center;
+        padding: 20px;
+        color: #666;
+        font-size: 14px;
+    }
+
+    /* 导出按钮区域 */
+    .export-section {
+        margin-top: 25px;
+        padding-top: 20px;
+        border-top: 2px solid #f0f0f0;
+    }
+
+    .export-section h3 {
+        font-size: 16px;
+        color: #333;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+
+    .export-buttons {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+    }
+
+    .export-btn {
+        padding: 10px 20px;
+        font-size: 14px;
+        font-weight: 500;
+        color: white;
+        background: #28a745;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .export-btn:hover {
+        background: #218838;
+        transform: translateY(-1px);
+    }
+
+    .export-btn.month {
+        background: #17a2b8;
+    }
+
+    .export-btn.month:hover {
+        background: #138496;
+    }
+
+    .export-btn.custom {
+        background: #6c757d;
+    }
+
+    .export-btn.custom:hover {
+        background: #5a6268;
+    }
+
+    .custom-export {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+        justify-content: center;
+    }
+
+    .custom-export input {
+        width: 70px;
+        padding: 8px 10px;
+        border: 2px solid #e0e0e0;
+        border-radius: 6px;
+        font-size: 14px;
+        text-align: center;
+    }
+
+    .custom-export input:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+
+    .nav-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    .nav-btn:disabled:hover {
+        border-color: #e0e0e0;
+        color: #666;
+        background: #fff;
+    }
+
+    /* 响应式 */
+    @media (max-width: 1000px) {
+        .journal-page {
+            grid-template-columns: 1fr;
+        }
+
+        .journal-review {
+            position: static;
+        }
+    }
+</style>
+
+<div class="journal-page">
+    <!-- 左侧：写日记 -->
+    <div class="journal-write">
+        <div class="journal-header">
+            <h1>🌅 晨间日记</h1>
+            <p style="color: #666; font-size: 14px;">限时 3 分钟，记录今天的美好开始</p>
+        </div>
+
+        <div class="timer-section">
+            <div class="timer-label">剩余时间</div>
+            <div class="timer-display" id="timerDisplay">03:00</div>
+            <div class="timer-label" id="timerLabel">请开始记录</div>
+        </div>
+
+        <div class="time-up-message" id="timeUpMessage" style="display: none;">
+            ⏰ 时间到！请尽快提交你的日记
+        </div>
+
+        <form id="journalForm">
+            <div class="question-section">
+                <div class="question-title">✅ 昨天成功做了什么？</div>
+                <textarea class="question-input" id="success" name="success" placeholder="写下昨天让你感到骄傲或满意的事情..."
+                    required></textarea>
+            </div>
+
+            <div class="question-section">
+                <div class="question-title">😔 昨天的遗憾是什么？</div>
+                <textarea class="question-input" id="regret" name="regret" placeholder="记录昨天的不足或遗憾，帮助今天改进..."
+                    required></textarea>
+            </div>
+
+            <div class="question-section">
+                <div class="question-title">⭐ 本日精华（一件事）</div>
+                <textarea class="question-input" id="highlight" name="highlight" placeholder="今天最重要的一件事是什么？..."
+                    required></textarea>
+            </div>
+
+            <div class="question-section">
+                <div class="question-title">🐸 今天要先吃的青蛙？ <span style="color: #667eea;">Eat First!</span></div>
+                <textarea class="question-input" id="frog" name="frog" placeholder="写下今天最重要、最需要优先完成的任务..."
+                    required></textarea>
+            </div>
+
+            <div class="submit-section">
+                <button type="submit" class="submit-btn" id="submitBtn">提交日记</button>
+                <div class="status-message" id="statusMessage"></div>
+            </div>
+        </form>
+    </div>
+
+    <!-- 右侧：回顾日记 -->
+    <div class="journal-review">
+        <div class="review-header">
+            <h2>📖 回顾日记</h2>
+        </div>
+
+        <!-- 日期导航 -->
+        <div class="date-nav">
+            <button class="nav-btn" id="prevDay" title="前一天">◀</button>
+            <div class="date-display" id="reviewDate">2025-01-01</div>
+            <button class="nav-btn" id="nextDay" title="后一天">▶</button>
+        </div>
+
+        <!-- 日期选择器 -->
+        <div class="date-picker-section">
+            <input type="date" class="date-picker-input" id="datePicker">
+        </div>
+
+        <!-- 日记内容 -->
+        <div class="review-content" id="reviewContent">
+            <div class="review-item">
+                <div class="review-item-title">✅ 昨天成功做了什么？</div>
+                <div class="review-item-content" id="review-success">加载中...</div>
+            </div>
+            <div class="review-item">
+                <div class="review-item-title">😔 昨天的遗憾是什么？</div>
+                <div class="review-item-content" id="review-regret">加载中...</div>
+            </div>
+            <div class="review-item">
+                <div class="review-item-title">⭐ 本日精华（一件事）</div>
+                <div class="review-item-content" id="review-highlight">加载中...</div>
+            </div>
+            <div class="review-item">
+                <div class="review-item-title">🐸 今天要先吃的青蛙？</div>
+                <div class="review-item-content" id="review-frog">加载中...</div>
+            </div>
+        </div>
+
+        <!-- 导出功能 -->
+        <div class="export-section">
+            <h3>📥 导出日记</h3>
+            <div class="export-buttons">
+                <a href="/morning-journal/export?period=7" class="export-btn" target="_blank">过去 7 天</a>
+                <a href="/morning-journal/export?period=30" class="export-btn month" target="_blank">过去 30 天</a>
+            </div>
+            <div class="custom-export">
+                <input type="number" id="customDays" min="1" max="365" value="14" placeholder="天数">
+                <button class="export-btn custom" id="customExportBtn">自定义导出</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ========== 倒计时逻辑 ==========
+    let timeLeft = 180;
+    let timerInterval = null;
+    let isTimeUp = false;
+    let isSubmitted = false;
+
+    function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+    function updateTimer() {
+        const timerDisplay = document.getElementById('timerDisplay');
+        const timerLabel = document.getElementById('timerLabel');
+
+        // 确保时间不为负数
+        if (timeLeft < 0) {
+            timeLeft = 0;
+        }
+
+        timerDisplay.textContent = formatTime(timeLeft);
+
+        if (timeLeft > 120) {
+            timerDisplay.className = 'timer-display';
+            timerLabel.textContent = '时间充足，慢慢思考';
+        } else if (timeLeft > 60) {
+            timerDisplay.className = 'timer-display';
+            timerLabel.textContent = '时间还够，继续思考';
+        } else if (timeLeft > 30) {
+            timerDisplay.className = 'timer-display timer-warning';
+            timerLabel.textContent = '时间过半，加快节奏';
+        } else if (timeLeft > 0) {
+            timerDisplay.className = 'timer-display timer-danger';
+            timerLabel.textContent = '时间不多，尽快完成';
+        } else {
+            timerDisplay.className = 'timer-display timer-danger';
+            timerLabel.textContent = '时间到！';
+            timeUp();
+        }
+    }
+
+    function timeUp() {
+        isTimeUp = true;
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+        document.getElementById('timeUpMessage').style.display = 'block';
+    }
+
+    function startTimer() {
+        if (timerInterval) return;
+        timerInterval = setInterval(() => {
+            if (!isTimeUp && !isSubmitted) {
+                if (timeLeft > 5) {
+                    timeLeft -= 5; // 每5秒减少5秒
+                } else {
+                    timeLeft = 0; // 如果不足5秒，直接归零
+                }
+                updateTimer();
+            }
+        }, 5000); // 每5秒更新一次
+    }
+
+    // ========== 回顾功能 ==========
+    // 默认显示昨天的日记
+    let currentReviewDate = new Date();
+    currentReviewDate.setDate(currentReviewDate.getDate() - 1);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    function formatDateStr(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function updateDateDisplay() {
+        document.getElementById('reviewDate').textContent = formatDateStr(currentReviewDate);
+        document.getElementById('datePicker').value = formatDateStr(currentReviewDate);
+
+        // 更新"后一天"按钮状态
+        const nextBtn = document.getElementById('nextDay');
+        const currentDateOnly = new Date(currentReviewDate);
+        currentDateOnly.setHours(0, 0, 0, 0);
+
+        if (currentDateOnly >= today) {
+            nextBtn.disabled = true;
+        } else {
+            nextBtn.disabled = false;
+        }
+    }
+
+    async function loadJournal(dateStr) {
+        // 获取各个内容元素，避免重新渲染整个区域
+        const successEl = document.getElementById('review-success');
+        const regretEl = document.getElementById('review-regret');
+        const highlightEl = document.getElementById('review-highlight');
+        const frogEl = document.getElementById('review-frog');
+
+        try {
+            const response = await fetch(`/morning-journal/get?date=${dateStr}`);
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                const data = result.data;
+
+                // 更新各个字段内容
+                successEl.textContent = data.success;
+                successEl.className = 'review-item-content' + (data.success === 'None' ? ' none' : '');
+
+                regretEl.textContent = data.regret;
+                regretEl.className = 'review-item-content' + (data.regret === 'None' ? ' none' : '');
+
+                highlightEl.textContent = data.highlight;
+                highlightEl.className = 'review-item-content' + (data.highlight === 'None' ? ' none' : '');
+
+                frogEl.textContent = data.frog;
+                frogEl.className = 'review-item-content' + (data.frog === 'None' ? ' none' : '');
+            } else {
+                successEl.textContent = '加载失败';
+                regretEl.textContent = '加载失败';
+                highlightEl.textContent = '加载失败';
+                frogEl.textContent = '加载失败';
+            }
+        } catch (error) {
+            successEl.textContent = '加载失败：' + error.message;
+            regretEl.textContent = '-';
+            highlightEl.textContent = '-';
+            frogEl.textContent = '-';
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function goToPrevDay() {
+        currentReviewDate.setDate(currentReviewDate.getDate() - 1);
+        updateDateDisplay();
+        loadJournal(formatDateStr(currentReviewDate));
+    }
+
+    function goToNextDay() {
+        const nextDate = new Date(currentReviewDate);
+        nextDate.setDate(nextDate.getDate() + 1);
+        nextDate.setHours(0, 0, 0, 0);
+
+        // 不能超过今天
+        if (nextDate > today) {
+            return;
+        }
+
+        currentReviewDate.setDate(currentReviewDate.getDate() + 1);
+        updateDateDisplay();
+        loadJournal(formatDateStr(currentReviewDate));
+    }
+
+    // ========== 表单提交 ==========
+    function showMessage(message, type) {
+        const statusMessage = document.getElementById('statusMessage');
+        statusMessage.textContent = message;
+        statusMessage.className = `status-message status-${type} show`;
+
+        if (type === 'success') {
+            setTimeout(() => {
+                statusMessage.classList.remove('show');
+            }, 5000);
+        }
+    }
+
+    // ========== 初始化 ==========
+    document.addEventListener('DOMContentLoaded', function () {
+        // 初始化计时器
+        updateTimer();
+
+        // 监听输入框开始计时
+        const inputs = document.querySelectorAll('.question-input');
+        inputs.forEach(input => {
+            input.addEventListener('focus', startTimer, { once: true });
+            input.addEventListener('input', startTimer, { once: true });
+        });
+
+        // 初始化回顾功能
+        updateDateDisplay();
+        loadJournal(formatDateStr(currentReviewDate));
+
+        // 日期导航按钮
+        document.getElementById('prevDay').addEventListener('click', goToPrevDay);
+        document.getElementById('nextDay').addEventListener('click', goToNextDay);
+
+        // 日期选择器 - 设置最大日期为今天
+        const datePicker = document.getElementById('datePicker');
+        datePicker.max = formatDateStr(today);
+
+        datePicker.addEventListener('change', function () {
+            const selectedDate = this.value;
+            if (selectedDate) {
+                const selected = new Date(selectedDate + 'T00:00:00');
+                // 不能超过今天
+                if (selected > today) {
+                    this.value = formatDateStr(today);
+                    currentReviewDate = new Date(today);
+                } else {
+                    currentReviewDate = selected;
+                }
+                updateDateDisplay();
+                loadJournal(formatDateStr(currentReviewDate));
+            }
+        });
+
+        // 表单提交
+        document.getElementById('journalForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            if (isSubmitted) {
+                showMessage('你已经提交过了！', 'error');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '提交中...';
+
+            const formData = {
+                success: document.getElementById('success').value.trim(),
+                regret: document.getElementById('regret').value.trim(),
+                highlight: document.getElementById('highlight').value.trim(),
+                frog: document.getElementById('frog').value.trim()
+            };
+
+            if (!formData.success || !formData.regret || !formData.highlight || !formData.frog) {
+                showMessage('请填写所有问题！', 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = '提交日记';
+                return;
+            }
+
+            try {
+                const response = await fetch('/morning-journal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    isSubmitted = true;
+                    if (timerInterval) clearInterval(timerInterval);
+                    showMessage('✅ ' + result.message, 'success');
+                    submitBtn.textContent = '已提交';
+
+                    document.querySelectorAll('.question-input').forEach(input => {
+                        input.disabled = true;
+                    });
+
+                    // 刷新今天的回顾
+                    const today = formatDateStr(new Date());
+                    if (formatDateStr(currentReviewDate) === today) {
+                        loadJournal(today);
+                    }
+                } else {
+                    showMessage('❌ ' + result.message, 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '提交日记';
+                }
+            } catch (error) {
+                showMessage('❌ 提交失败，请重试: ' + error.message, 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = '提交日记';
+            }
+        });
+
+        // 自定义导出
+        document.getElementById('customExportBtn').addEventListener('click', function () {
+            const days = document.getElementById('customDays').value;
+            if (days && days >= 1 && days <= 365) {
+                window.open(`/morning-journal/export?period=${days}`, '_blank');
+            } else {
+                alert('请输入 1-365 之间的天数');
+            }
+        });
+    });
+</script>
+{% endblock %}

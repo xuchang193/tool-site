@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>晨间日记 - {{ period }}天回顾</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background: #f0f2f5;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* 日历网格 */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 12px;
+        }
+
+        /* 星期标题 */
+        .weekday-header {
+            background: #667eea;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+            border-radius: 8px;
+        }
+
+        /* 日记卡片 */
+        .day-card {
+            background: white;
+            border-radius: 10px;
+            padding: 12px;
+            min-height: 200px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s ease;
+        }
+
+        .day-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+
+        .day-card.empty {
+            background: #f8f9fa;
+            opacity: 0.5;
+        }
+
+        .day-card.has-content {
+            border-left: 4px solid #667eea;
+        }
+
+        .day-card.no-content {
+            border-left: 4px solid #ddd;
+        }
+
+        .day-date {
+            font-size: 16px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .day-date .weekday {
+            font-size: 12px;
+            font-weight: 400;
+            color: #999;
+            margin-left: 8px;
+        }
+
+        .day-content {
+            flex: 1;
+            font-size: 12px;
+            overflow: hidden;
+        }
+
+        .content-item {
+            margin-bottom: 8px;
+            padding: 6px 8px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .content-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .content-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 3px;
+        }
+
+        .content-text {
+            color: #333;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            word-break: break-word;
+        }
+
+        .content-text.none {
+            color: #bbb;
+            font-style: italic;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            color: #666;
+            font-size: 13px;
+        }
+
+        /* 详细列表视图 */
+        .detail-section {
+            margin-top: 50px;
+            page-break-before: always;
+        }
+
+        .detail-section h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 25px;
+            font-size: 22px;
+        }
+
+        .journal-day {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            page-break-inside: avoid;
+        }
+
+        .journal-day.no-content {
+            opacity: 0.6;
+        }
+
+        .journal-date {
+            font-size: 18px;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .journal-item {
+            margin-bottom: 12px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
+
+        .journal-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .item-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 6px;
+        }
+
+        .item-content {
+            font-size: 14px;
+            color: #333;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .item-content.none {
+            color: #999;
+            font-style: italic;
+        }
+
+        /* 打印样式 */
+        @media print {
+            body {
+                background: white;
+            }
+
+            .container {
+                padding: 10px;
+            }
+
+            .header {
+                background: #667eea !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .calendar-grid {
+                gap: 8px;
+            }
+
+            .day-card {
+                box-shadow: none;
+                border: 1px solid #e0e0e0;
+                min-height: 150px;
+            }
+
+            .day-card.has-content {
+                border-left: 3px solid #667eea !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .journal-day {
+                box-shadow: none;
+                border: 1px solid #e0e0e0;
+            }
+
+            .weekday-header {
+                background: #667eea !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+
+        @media (max-width: 1000px) {
+            .calendar-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .weekday-header {
+                display: none;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .calendar-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌅 晨间日记</h1>
+            <p>{{ period }} 天回顾 · {{ start_date }} 至 {{ end_date }} · 导出于 {{ export_date }}</p>
+        </div>
+
+        <!-- 日历网格视图 -->
+        <div class="calendar-grid">
+            <!-- 星期标题 -->
+            <div class="weekday-header">周一</div>
+            <div class="weekday-header">周二</div>
+            <div class="weekday-header">周三</div>
+            <div class="weekday-header">周四</div>
+            <div class="weekday-header">周五</div>
+            <div class="weekday-header">周六</div>
+            <div class="weekday-header">周日</div>
+
+            <!-- 填充空白格子 -->
+            {% for _ in range(first_weekday) %}
+            <div class="day-card empty"></div>
+            {% endfor %}
+
+            <!-- 日记卡片 -->
+            {% for journal in journals_sorted %}
+            <div class="day-card {% if journal.success != 'None' %}has-content{% else %}no-content{% endif %}">
+                <div class="day-date">
+                    {{ journal.day }}
+                    <span class="weekday">{{ journal.weekday }}</span>
+                </div>
+                <div class="day-content">
+                    <div class="content-item">
+                        <div class="content-label">✅ 成功</div>
+                        <div class="content-text {% if journal.success == 'None' %}none{% endif %}">{{ journal.success
+                            }}</div>
+                    </div>
+                    <div class="content-item">
+                        <div class="content-label">🐸 青蛙</div>
+                        <div class="content-text {% if journal.frog == 'None' %}none{% endif %}">{{ journal.frog }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- 详细列表视图 -->
+        <div class="detail-section">
+            <h2>📋 详细记录</h2>
+
+            {% for journal in journals %}
+            <div class="journal-day {% if journal.success == 'None' %}no-content{% endif %}">
+                <div class="journal-date">📅 {{ journal.date }} {{ journal.weekday_full }}</div>
+
+                <div class="journal-item">
+                    <div class="item-title">✅ 昨天成功做了什么？</div>
+                    <div class="item-content {% if journal.success == 'None' %}none{% endif %}">{{ journal.success }}
+                    </div>
+                </div>
+
+                <div class="journal-item">
+                    <div class="item-title">😔 昨天的遗憾是什么？</div>
+                    <div class="item-content {% if journal.regret == 'None' %}none{% endif %}">{{ journal.regret }}
+                    </div>
+                </div>
+
+                <div class="journal-item">
+                    <div class="item-title">⭐ 本日精华（一件事）</div>
+                    <div class="item-content {% if journal.highlight == 'None' %}none{% endif %}">{{ journal.highlight
+                        }}</div>
+                </div>
+
+                <div class="journal-item">
+                    <div class="item-title">🐸 今天要先吃的青蛙？</div>
+                    <div class="item-content {% if journal.frog == 'None' %}none{% endif %}">{{ journal.frog }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="footer">
+            <p>晨间日记 · 记录每一天的成长</p>
+            <p style="margin-top: 5px; font-size: 12px;">提示：可使用浏览器的"打印"功能（Ctrl+P）导出为 PDF</p>
+        </div>
+    </div>
+</body>
+
+</html>
